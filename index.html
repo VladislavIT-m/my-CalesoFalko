@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColesoFalko</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="casino-card">
+    <h1 class="title">ColesoFalko</h1>
+    <p class="subtitle">Крути колесо и смотри, какое число выпадет</p>
+
+    <section class="roulette-wrap">
+      <div class="wheel-shell">
+        <div class="pointer"></div>
+        <canvas id="rouletteCanvas" width="640" height="640"></canvas>
+        <div class="center-dot"></div>
+      </div>
+
+      <div class="controls">
+        <button id="spinBtn">Крутить колесо</button>
+        <button id="skipSpinBtn" disabled>Скип</button>
+        <div class="result" id="resultText">Нажми кнопку, чтобы начать</div>
+      </div>
+
+      <div class="bet-panel">
+        <div class="bet-row">
+          <label for="betAmount">Текущая ставка:</label>
+          <input id="betAmount" type="number" min="100" max="1000" value="100" step="100">
+          <button id="openBetWindowBtn" type="button">Открыть окно ставок</button>
+        </div>
+        <div class="bet-row">
+          <label for="balanceAmount">Изменить баланс:</label>
+          <input id="balanceAmount" type="number" min="0" value="1000" step="100">
+          <button id="applyBalanceBtn" type="button">Применить баланс</button>
+        </div>
+        <div class="bet-limits">Лимит ставки: минимум 100, максимум 1000</div>
+        <div class="stats">
+          <span id="balanceText">Баланс: 1000</span>
+          <span id="currentBetText">Текущая ставка: 100 | Поставлено: 0</span>
+          <span id="selectedBetText">Выбрано: нет</span>
+          <span id="lastWinText">Последний выигрыш: 0</span>
+        </div>
+        <div class="auto-spin-info">
+          <span>До автокрутки: <b id="nextAutoSpinText">20.0с</b></span>
+          <span>До конца крутки: <b id="spinEndsInText">0.0с</b></span>
+          <span>До обновления: <b id="freezeEndsInText">0.0с</b></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="resultModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <h3 id="modalTitle">Результат</h3>
+      <p id="modalMessage"></p>
+      <button id="modalCloseBtn">Закрыть</button>
+    </div>
+  </div>
+
+  <div id="betWindowBackdrop" class="modal-backdrop">
+    <div class="modal large">
+      <h3>Окно выбора ставок</h3>
+      <p>Можно выбрать несколько конкретных чисел + модификаторы.</p>
+      <div class="bet-window-grid">
+        <div class="stripe-row" id="stripe1Row"></div>
+        <div class="stripe-row" id="stripe2Row"></div>
+        <div class="stripe-row" id="stripe3Row"></div>
+      </div>
+      <div class="bet-window-bottom">
+        <div class="choice-row">
+          <button id="setRedBtn" type="button">Красные (x2)</button>
+          <button id="setBlackBtn" type="button">Чёрные (x2)</button>
+          <button id="setEvenBtn" type="button">Чётные (x2)</button>
+          <button id="setOddBtn" type="button">Нечётные (x2)</button>
+        </div>
+        <div class="choice-row">
+          <button id="setZeroBtn" type="button">0 (x30)</button>
+          <button id="setDoubleZeroBtn" type="button">00 (x30)</button>
+          <button id="clearCellsBtn" type="button">Сбросить выбор</button>
+          <button id="betWindowCloseBtn" type="button">Готово</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="withdrawModalBackdrop" class="modal-backdrop">
+    <div class="modal fullscreen">
+      <h3>Вывод средств</h3>
+      <p id="withdrawModalMessage"></p>
+      <button id="withdrawModalCloseBtn">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="x-info-floating">
+    <h4>Типы ставок (X)</h4>
+    <p>
+      X2: красные/чёрные, чётные/нечётные. X3: выбранная полоса.
+      X30: конкретные числа и отдельно 0 или 00.
+    </p>
+    <p class="hits">Срабатываний: X2 <span id="x2Hits">0</span> | X3 <span id="x3Hits">0</span> | X30 <span id="x30Hits">0</span></p>
+  </div>
+
+  <div class="withdraw-info-floating">
+    <h4>Окно вывода</h4>
+    <p>Баланс: <span id="withdrawBalanceText">1000</span></p>
+    <p>Комиссия 10%: <span id="withdrawFeeText">100</span></p>
+    <p>К получению: <span id="withdrawNetText">900</span></p>
+    <button id="openWithdrawModalBtn" type="button">Вывод</button>
+  </div>
+
+  <div class="spin-history-floating">
+    <h4>Прошлые крутки</h4>
+    <div id="spinHistoryList" class="spin-history-list"></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

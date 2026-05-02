@@ -1,0 +1,358 @@
+:root {
+  --text-main: #e9eef3;
+  --text-muted: #a5b4c3;
+  --gold: #d6b66a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 20% 20%, #223449 0%, transparent 50%),
+    radial-gradient(circle at 85% 75%, #1b3a2b 0%, transparent 45%),
+    linear-gradient(140deg, #0f1720 0%, #121a24 45%, #0d131b 100%);
+  padding: 24px;
+}
+
+.casino-card {
+  width: min(1060px, 100%);
+  background: linear-gradient(170deg, #202c39 0%, #16212c 100%);
+  border: 1px solid #314255;
+  border-radius: 20px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+  padding: 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 34px);
+  color: var(--gold);
+  text-align: center;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.roulette-wrap {
+  margin-top: 24px;
+  display: grid;
+  gap: 24px;
+  justify-items: center;
+}
+
+.wheel-shell {
+  position: relative;
+  width: min(90vw, 640px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  padding: 16px;
+  background: linear-gradient(150deg, #513f24 0%, #2f2516 100%);
+  box-shadow: inset 0 0 0 2px #7d6640, inset 0 0 28px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #111923;
+}
+
+.pointer {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-top: 30px solid #f2d18b;
+  z-index: 2;
+}
+
+.center-dot {
+  position: absolute;
+  inset: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #f2d18b;
+  box-shadow: 0 0 0 4px #2f2516;
+}
+
+.controls {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.bet-panel {
+  width: min(860px, 100%);
+  background: rgba(8, 12, 17, 0.45);
+  border: 1px solid #2d3d4f;
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.bet-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.bet-row label {
+  color: var(--text-muted);
+}
+
+.bet-limits {
+  text-align: center;
+  color: #fff0c4;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid #6d5a2f;
+  border-radius: 10px;
+  background: rgba(72, 55, 26, 0.35);
+}
+
+input[type="number"] {
+  width: 150px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #3b4f65;
+  background: #121c26;
+  color: #ecf4ff;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.auto-spin-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  color: #d7e7f7;
+  font-size: 13px;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  color: #102417;
+  background: linear-gradient(180deg, #7fe0b6 0%, #4fb38d 100%);
+  cursor: pointer;
+}
+
+button.active {
+  background: linear-gradient(180deg, #f0d291 0%, #c9a55c 100%);
+  color: #201b0f;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.result {
+  font-size: 18px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 999;
+}
+
+.modal-backdrop.show {
+  display: flex;
+}
+
+.modal {
+  width: min(420px, 100%);
+  background: linear-gradient(170deg, #1f2c39 0%, #141f2a 100%);
+  border: 1px solid #3a4f66;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+
+.modal.large {
+  width: min(930px, 100%);
+  text-align: left;
+}
+
+.modal.fullscreen {
+  width: min(900px, 96vw);
+  min-height: min(420px, 88vh);
+  display: grid;
+  place-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.modal h3 {
+  margin: 0 0 8px;
+  color: var(--gold);
+}
+
+.modal p {
+  margin: 0 0 14px;
+  color: #d9e4ef;
+}
+
+.bet-window-grid {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.stripe-row {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(34px, 1fr));
+  gap: 6px;
+}
+
+.cell-btn,
+.row-pick-btn {
+  border-radius: 8px;
+  font-size: 12px;
+  min-height: 36px;
+  border: 1px solid #38506a;
+  background: #162433;
+  color: #e8f1fb;
+  padding: 8px 6px;
+}
+
+.cell-btn.active,
+.row-pick-btn.active {
+  border-color: #d6b66a;
+  background: #2e3f54;
+  color: #fff4d8;
+}
+
+.bet-window-bottom {
+  border-top: 1px solid #314355;
+  padding-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.x-info-floating {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  width: min(320px, 92vw);
+  background: rgba(12, 19, 27, 0.92);
+  border: 1px solid #32475d;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.x-info-floating h4 {
+  margin: 0 0 8px;
+  color: var(--gold);
+}
+
+.x-info-floating p {
+  margin: 0;
+  color: #cad7e4;
+  font-size: 13px;
+}
+
+.x-info-floating .hits {
+  margin-top: 8px;
+}
+
+.withdraw-info-floating {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  width: min(320px, 92vw);
+  background: rgba(12, 19, 27, 0.92);
+  border: 1px solid #32475d;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.withdraw-info-floating h4 {
+  margin: 0;
+  color: var(--gold);
+}
+
+.withdraw-info-floating p {
+  margin: 0;
+  color: #cad7e4;
+  font-size: 13px;
+}
+
+.spin-history-floating {
+  position: fixed;
+  right: 12px;
+  top: 12px;
+  width: min(320px, 92vw);
+  background: rgba(12, 19, 27, 0.92);
+  border: 1px solid #32475d;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.spin-history-floating h4 {
+  margin: 0 0 10px;
+  color: var(--gold);
+}
+
+.spin-history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.spin-history-item {
+  min-width: 38px;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 6px 8px;
+  color: #f8f2de;
+  font-weight: 700;
+}

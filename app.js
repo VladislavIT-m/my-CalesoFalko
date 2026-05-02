@@ -293,8 +293,10 @@ function createNumberButton(value) {
   btn.className = "cell-btn";
   btn.textContent = String(value);
   const wheelColor = getWheelColorForNumber(value);
-  btn.style.backgroundColor = wheelColor;
-  btn.style.color = "#f6f0dd";
+  // Глобальный стиль `button { background: linear-gradient(...) }` задаёт background-image;
+  // одного backgroundColor недостаточно — градиент остаётся поверх. Сбрасываем весь фон.
+  btn.style.setProperty("background", wheelColor, "important");
+  btn.style.setProperty("color", "#f6f0dd", "important");
   if (numberBets.has(String(value))) btn.classList.add("active");
   btn.addEventListener("click", () => {
     const key = String(value);

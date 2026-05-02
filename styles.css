@@ -257,6 +257,12 @@ button:disabled {
   filter: brightness(1.1);
 }
 
+/* Перебиваем общие стили `button` / `button.active` внутри окна ставок */
+.bet-window-grid button.cell-btn,
+.bet-window-grid button.cell-btn.active {
+  background-image: none;
+}
+
 .row-pick-btn {
   border-radius: 8px;
   font-size: 12px;

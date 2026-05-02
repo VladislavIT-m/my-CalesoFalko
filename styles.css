@@ -242,7 +242,21 @@ button:disabled {
   gap: 6px;
 }
 
-.cell-btn,
+.cell-btn {
+  border-radius: 8px;
+  font-size: 12px;
+  min-height: 36px;
+  border: 1px solid rgba(213, 194, 140, 0.45);
+  padding: 8px 6px;
+  font-weight: 700;
+}
+
+.cell-btn.active {
+  border-color: #d6b66a;
+  box-shadow: 0 0 0 2px rgba(214, 182, 106, 0.45);
+  filter: brightness(1.1);
+}
+
 .row-pick-btn {
   border-radius: 8px;
   font-size: 12px;
@@ -253,7 +267,6 @@ button:disabled {
   padding: 8px 6px;
 }
 
-.cell-btn.active,
 .row-pick-btn.active {
   border-color: #d6b66a;
   background: #2e3f54;

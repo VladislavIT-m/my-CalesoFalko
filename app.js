@@ -85,6 +85,13 @@ function getSlotColorByIndex(index) {
   return index % 2 === 0 ? "#b63a3a" : "#1a1a1a";
 }
 
+function getWheelColorForNumber(value) {
+  const key = String(value);
+  const idx = slots.indexOf(key);
+  if (idx === -1) return "#162433";
+  return getSlotColorByIndex(idx);
+}
+
 const redNumbers = new Set();
 for (let i = 0; i < slots.length; i += 1) {
   const value = slots[i];
@@ -285,6 +292,9 @@ function createNumberButton(value) {
   btn.type = "button";
   btn.className = "cell-btn";
   btn.textContent = String(value);
+  const wheelColor = getWheelColorForNumber(value);
+  btn.style.backgroundColor = wheelColor;
+  btn.style.color = "#f6f0dd";
   if (numberBets.has(String(value))) btn.classList.add("active");
   btn.addEventListener("click", () => {
     const key = String(value);

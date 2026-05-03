@@ -74,6 +74,9 @@ const stripeBets = new Map();
 const modifierBets = new Map();
 const spinHistory = [];
 const maxHistoryItems = 18;
+const STORAGE_KEY_SPIN_HISTORY = "roulette_spin_history_v1";
+/** Множитель веса «выигрышных» при текущих ставках: меньше 1 — реже выпадение, но не ноль. */
+const selectedWinWeightMultiplier = 0.28;
 const idleSpinSpeed = 0.0024;
 const spinDurationMs = 7600;
 const autoSpinDelayMs = 20000;
@@ -149,8 +152,36 @@ function drawWheel(rotation = 0) {
   ctx.restore();
 }
 
-function pickWeightedIndex() {
-  const weights = slots.map((value) => (value === "0" || value === "00" ? 0.08 : 1));
+function indexWouldWinWithCurrentBets(landedIndex) {
+  if (!numberBets.size && !stripeBets.size && !modifierBets.size) return false;
+  const landedValue = slots[landedIndex];
+  const landedNum = Number(landedValue);
+  const isZero = landedValue === "0" || landedValue === "00";
+  const isRed = !isZero && redNumbers.has(landedNum);
+  const isBlack = !isZero && !redNumbers.has(landedNum);
+  const isEven = !isZero && landedNum % 2 === 0;
+  const isOdd = !isZero && landedNum % 2 === 1;
+  if (numberBets.has(landedValue)) return true;
+  if (stripeBets.has("A") && stripeA.includes(landedNum)) return true;
+  if (stripeBets.has("B") && stripeB.includes(landedNum)) return true;
+  if (stripeBets.has("C") && stripeC.includes(landedNum)) return true;
+  if (modifierBets.has("red") && isRed) return true;
+  if (modifierBets.has("black") && isBlack) return true;
+  if (modifierBets.has("even") && isEven) return true;
+  if (modifierBets.has("odd") && isOdd) return true;
+  if (modifierBets.has("zero") && landedValue === "0") return true;
+  if (modifierBets.has("doubleZero") && landedValue === "00") return true;
+  return false;
+}
+
+function pickWeightedIndex(applyBiasAgainstSelectedWins) {
+  const weights = slots.map((value, i) => {
+    let w = value === "0" || value === "00" ? 0.08 : 1;
+    if (applyBiasAgainstSelectedWins && indexWouldWinWithCurrentBets(i)) {
+      w *= selectedWinWeightMultiplier;
+    }
+    return w;
+  });
   const weightSum = weights.reduce((sum, w) => sum + w, 0);
   let rnd = Math.random() * weightSum;
   for (let i = 0; i < weights.length; i += 1) {
@@ -158,6 +189,32 @@ function pickWeightedIndex() {
     if (rnd <= 0) return i;
   }
   return weights.length - 1;
+}
+
+function loadSpinHistoryFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SPIN_HISTORY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return;
+    spinHistory.length = 0;
+    for (const item of parsed) {
+      if (item && typeof item.value === "string" && typeof item.color === "string") {
+        spinHistory.push({ value: item.value, color: item.color });
+      }
+    }
+    if (spinHistory.length > maxHistoryItems) spinHistory.length = maxHistoryItems;
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function saveSpinHistoryToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY_SPIN_HISTORY, JSON.stringify(spinHistory));
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 function easeOutCubic(t) {
@@ -393,7 +450,7 @@ function spin(options = {}) {
   balance -= useBets ? totalBet : 0;
   updateStats();
 
-  const targetIndex = pickWeightedIndex();
+  const targetIndex = pickWeightedIndex(useBets);
   const extraSpins = 6 + Math.random() * 2;
   const finalRotation = getRotationForTargetIndex(targetIndex, currentRotation, extraSpins);
   const duration = spinDurationMs;
@@ -479,6 +536,7 @@ function spin(options = {}) {
     });
     if (spinHistory.length > maxHistoryItems) spinHistory.length = maxHistoryItems;
     renderSpinHistory();
+    saveSpinHistoryToStorage();
     balance += winAmount;
     spinning = false;
     skipSpinRequested = false;
@@ -494,6 +552,14 @@ function spin(options = {}) {
       showModal(true, `Выпало ${landedValue}. Сыграло: ${wins.join(", ")}. Выигрыш: ${winAmount}`);
     } else if (!wins.length && !auto && useBets) {
       showModal(false, `Выпало ${landedValue}. Ни одна ставка не сыграла.`);
+    }
+
+    if (useBets) {
+      numberBets.clear();
+      stripeBets.clear();
+      modifierBets.clear();
+      renderBetWindow();
+      updateStats();
     }
   }
 
@@ -616,6 +682,7 @@ withdrawModalBackdrop.addEventListener("click", (event) => {
   if (event.target === withdrawModalBackdrop) withdrawModalBackdrop.classList.remove("show");
 });
 
+loadSpinHistoryFromStorage();
 renderBetWindow();
 updateStats();
 renderSpinHistory();

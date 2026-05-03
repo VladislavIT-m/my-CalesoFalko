@@ -74,9 +74,14 @@ const stripeBets = new Map();
 const modifierBets = new Map();
 const spinHistory = [];
 const maxHistoryItems = 18;
-const STORAGE_KEY_SPIN_HISTORY = "roulette_spin_history_v1";
+const STORAGE_KEY = "roulette_save_v2";
+const STORAGE_KEY_LEGACY_HISTORY = "roulette_spin_history_v1";
 /** Множитель веса «выигрышных» при текущих ставках: меньше 1 — реже выпадение, но не ноль. */
-const selectedWinWeightMultiplier = 0.28;
+const selectedWinWeightMultiplier = 0.22;
+/** Сколько последних выпадений учитывать, чтобы реже повторялось то же число. */
+const recentRepeatLookback = 5;
+/** Множитель веса секторов с числом из недавней истории (не ноль). */
+const recentRepeatWeightMultiplier = 0.35;
 const idleSpinSpeed = 0.0024;
 const spinDurationMs = 7600;
 const autoSpinDelayMs = 20000;
@@ -175,10 +180,16 @@ function indexWouldWinWithCurrentBets(landedIndex) {
 }
 
 function pickWeightedIndex(applyBiasAgainstSelectedWins) {
+  const recentValues = new Set(
+    spinHistory.slice(0, recentRepeatLookback).map((h) => h.value)
+  );
   const weights = slots.map((value, i) => {
     let w = value === "0" || value === "00" ? 0.08 : 1;
     if (applyBiasAgainstSelectedWins && indexWouldWinWithCurrentBets(i)) {
       w *= selectedWinWeightMultiplier;
+    }
+    if (recentValues.has(value)) {
+      w *= recentRepeatWeightMultiplier;
     }
     return w;
   });
@@ -191,17 +202,22 @@ function pickWeightedIndex(applyBiasAgainstSelectedWins) {
   return weights.length - 1;
 }
 
-function loadSpinHistoryFromStorage() {
+function normalizeHistoryItem(item) {
+  if (!item || typeof item.value !== "string" || typeof item.color !== "string") return null;
+  const at = typeof item.at === "number" && Number.isFinite(item.at) ? item.at : null;
+  return at != null ? { value: item.value, color: item.color, at } : { value: item.value, color: item.color };
+}
+
+function loadLegacyHistoryOnly() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_SPIN_HISTORY);
+    const raw = localStorage.getItem(STORAGE_KEY_LEGACY_HISTORY);
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return;
     spinHistory.length = 0;
     for (const item of parsed) {
-      if (item && typeof item.value === "string" && typeof item.color === "string") {
-        spinHistory.push({ value: item.value, color: item.color });
-      }
+      const normalized = normalizeHistoryItem(item);
+      if (normalized) spinHistory.push(normalized);
     }
     if (spinHistory.length > maxHistoryItems) spinHistory.length = maxHistoryItems;
   } catch (_) {
@@ -209,9 +225,74 @@ function loadSpinHistoryFromStorage() {
   }
 }
 
-function saveSpinHistoryToStorage() {
+function loadSessionState() {
   try {
-    localStorage.setItem(STORAGE_KEY_SPIN_HISTORY, JSON.stringify(spinHistory));
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      loadLegacyHistoryOnly();
+      return;
+    }
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object") {
+      loadLegacyHistoryOnly();
+      return;
+    }
+
+    if (typeof data.balance === "number" && Number.isFinite(data.balance) && data.balance >= 0) {
+      balance = Math.floor(data.balance);
+    }
+    if (typeof data.currentRotation === "number" && Number.isFinite(data.currentRotation)) {
+      const full = Math.PI * 2;
+      currentRotation = ((data.currentRotation % full) + full) % full;
+    }
+    if (typeof data.holdUntilTimestamp === "number" && Number.isFinite(data.holdUntilTimestamp)) {
+      holdUntilTimestamp = data.holdUntilTimestamp;
+    }
+    if (typeof data.nextAutoSpinAtTimestamp === "number" && Number.isFinite(data.nextAutoSpinAtTimestamp)) {
+      nextAutoSpinAtTimestamp = data.nextAutoSpinAtTimestamp;
+    }
+    if (typeof data.lastWin === "number" && Number.isFinite(data.lastWin) && data.lastWin >= 0) {
+      lastWin = Math.floor(data.lastWin);
+    }
+    if (typeof data.x2Hits === "number" && Number.isFinite(data.x2Hits) && data.x2Hits >= 0) {
+      x2Hits = Math.floor(data.x2Hits);
+    }
+    if (typeof data.x3Hits === "number" && Number.isFinite(data.x3Hits) && data.x3Hits >= 0) {
+      x3Hits = Math.floor(data.x3Hits);
+    }
+    if (typeof data.x30Hits === "number" && Number.isFinite(data.x30Hits) && data.x30Hits >= 0) {
+      x30Hits = Math.floor(data.x30Hits);
+    }
+
+    if (Array.isArray(data.spinHistory)) {
+      spinHistory.length = 0;
+      for (const item of data.spinHistory) {
+        const normalized = normalizeHistoryItem(item);
+        if (normalized) spinHistory.push(normalized);
+      }
+      if (spinHistory.length > maxHistoryItems) spinHistory.length = maxHistoryItems;
+    }
+  } catch (_) {
+    loadLegacyHistoryOnly();
+  }
+}
+
+function saveSessionState() {
+  try {
+    const payload = {
+      v: 2,
+      savedAt: Date.now(),
+      balance,
+      currentRotation,
+      holdUntilTimestamp,
+      nextAutoSpinAtTimestamp,
+      lastWin,
+      x2Hits,
+      x3Hits,
+      x30Hits,
+      spinHistory
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (_) {
     /* ignore */
   }
@@ -302,6 +383,9 @@ function renderSpinHistory() {
     chip.className = "spin-history-item";
     chip.textContent = item.value;
     chip.style.backgroundColor = item.color;
+    if (typeof item.at === "number" && Number.isFinite(item.at)) {
+      chip.title = new Date(item.at).toLocaleString();
+    }
     spinHistoryList.appendChild(chip);
   });
 }
@@ -532,11 +616,11 @@ function spin(options = {}) {
     lastWin = winAmount;
     spinHistory.unshift({
       value: landedValue,
-      color: getSlotColorByIndex(landedIndex)
+      color: getSlotColorByIndex(landedIndex),
+      at: Date.now()
     });
     if (spinHistory.length > maxHistoryItems) spinHistory.length = maxHistoryItems;
     renderSpinHistory();
-    saveSpinHistoryToStorage();
     balance += winAmount;
     spinning = false;
     skipSpinRequested = false;
@@ -561,6 +645,8 @@ function spin(options = {}) {
       renderBetWindow();
       updateStats();
     }
+
+    saveSessionState();
   }
 
   forceFinishSpin = () => {
@@ -667,6 +753,7 @@ applyBalanceBtn.addEventListener("click", () => {
   }
   balance = normalizeBalanceInput();
   updateStats();
+  saveSessionState();
 });
 betAmountInput.addEventListener("input", updateStats);
 balanceAmountInput.addEventListener("input", normalizeBalanceInput);
@@ -682,8 +769,13 @@ withdrawModalBackdrop.addEventListener("click", (event) => {
   if (event.target === withdrawModalBackdrop) withdrawModalBackdrop.classList.remove("show");
 });
 
-loadSpinHistoryFromStorage();
+loadSessionState();
 renderBetWindow();
 updateStats();
 renderSpinHistory();
+drawWheel(currentRotation);
+window.addEventListener("beforeunload", saveSessionState);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") saveSessionState();
+});
 startIdleAnimation();

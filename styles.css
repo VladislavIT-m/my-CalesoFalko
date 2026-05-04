@@ -44,6 +44,51 @@ body {
   color: var(--text-muted);
 }
 
+.account-panel {
+  margin-top: 18px;
+  background: rgba(8, 12, 17, 0.45);
+  border: 1px solid #2d3d4f;
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.account-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-panel {
+  border-top: 1px solid #32475d;
+  padding-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-panel h3 {
+  margin: 0;
+  text-align: center;
+  color: var(--gold);
+  font-size: 16px;
+}
+
+select {
+  width: 290px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #3b4f65;
+  background: #121c26;
+  color: #ecf4ff;
+}
+
+.hidden {
+  display: none;
+}
+
 .roulette-wrap {
   margin-top: 24px;
   display: grid;

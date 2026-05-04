@@ -10,6 +10,26 @@
   <main class="casino-card">
     <h1 class="title">ColesoFalko</h1>
     <p class="subtitle">Крути колесо и смотри, какое число выпадет</p>
+    <section class="account-panel">
+      <div class="account-row">
+        <input id="steamIdInput" type="text" placeholder="SteamID (например 7656119...)" />
+        <input id="steamNameInput" type="text" placeholder="Ник в Steam" />
+        <button id="steamLoginBtn" type="button">Войти через Steam</button>
+        <button id="steamLogoutBtn" type="button">Выйти</button>
+      </div>
+      <div class="account-row">
+        <span id="authStatusText">Статус: не авторизован</span>
+        <span id="playerProfitText">Профит с рулетки: 0</span>
+      </div>
+      <div id="adminPanel" class="admin-panel hidden">
+        <h3>Админ-панель</h3>
+        <div class="account-row">
+          <select id="adminAccountSelect"></select>
+          <input id="adminTopUpAmountInput" type="number" min="1" step="1" value="1000" />
+          <button id="adminTopUpBtn" type="button">Начислить баланс</button>
+        </div>
+      </div>
+    </section>
 
     <section class="roulette-wrap">
       <div class="wheel-shell">
@@ -19,9 +39,8 @@
       </div>
 
       <div class="controls">
-        <button id="spinBtn">Крутить колесо</button>
         <button id="skipSpinBtn" disabled>Скип</button>
-        <div class="result" id="resultText">Нажми кнопку, чтобы начать</div>
+        <div class="result" id="resultText">Ожидание автокрутки...</div>
       </div>
 
       <div class="bet-panel">
@@ -31,9 +50,9 @@
           <button id="openBetWindowBtn" type="button">Открыть окно ставок</button>
         </div>
         <div class="bet-row">
-          <label for="balanceAmount">Изменить баланс:</label>
+          <label for="balanceAmount">Только просмотр баланса:</label>
           <input id="balanceAmount" type="number" min="0" value="1000" step="100">
-          <button id="applyBalanceBtn" type="button">Применить баланс</button>
+          <button id="applyBalanceBtn" type="button" disabled>Доступно только админу</button>
         </div>
         <div class="bet-limits">Лимит ставки: минимум 100, максимум 1000</div>
         <div class="stats">
@@ -43,7 +62,7 @@
           <span id="lastWinText">Последний выигрыш: 0</span>
         </div>
         <div class="auto-spin-info">
-          <span>До автокрутки: <b id="nextAutoSpinText">20.0с</b></span>
+          <span>До автокрутки: <b id="nextAutoSpinText">30.0с</b></span>
           <span>До конца крутки: <b id="spinEndsInText">0.0с</b></span>
           <span>До обновления: <b id="freezeEndsInText">0.0с</b></span>
         </div>
@@ -115,6 +134,6 @@
     <div id="spinHistoryList" class="spin-history-list"></div>
   </div>
 
-  <script src="./app.js"></script>
+  <script src="./client.js"></script>
 </body>
 </html>

@@ -11,6 +11,10 @@
     <h1 class="title">ColesoFalko</h1>
     <p class="subtitle">Крути колесо и смотри, какое число выпадет</p>
     <section class="account-panel">
+      <div class="account-head">
+        <div class="steam-badge">Steam Login</div>
+        <div class="account-caption">Войди, чтобы делать ставки и получать баланс</div>
+      </div>
       <div class="account-row">
         <input id="steamIdInput" type="text" placeholder="SteamID (например 7656119...)" />
         <input id="steamNameInput" type="text" placeholder="Ник в Steam" />
@@ -18,8 +22,8 @@
         <button id="steamLogoutBtn" type="button">Выйти</button>
       </div>
       <div class="account-row">
-        <span id="authStatusText">Статус: не авторизован</span>
-        <span id="playerProfitText">Профит с рулетки: 0</span>
+        <span id="authStatusText" class="status-pill">Статус: не авторизован</span>
+        <span id="playerProfitText" class="status-pill">Профит с рулетки: 0</span>
       </div>
       <div id="adminPanel" class="admin-panel hidden">
         <h3>Админ-панель</h3>

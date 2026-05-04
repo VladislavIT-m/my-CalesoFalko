@@ -62,6 +62,7 @@ const minBet = 100;
 const maxBet = 1000;
 const spinDurationMs = 7600;
 const AUTH_TOKEN_KEY = "roulette_auth_token_v1";
+const idleSpinSpeed = 0.0022;
 
 let authToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
 let serverOffset = 0;
@@ -113,6 +114,7 @@ function drawWheel(rotation = 0) {
   ctx.translate(cx, cy);
   ctx.rotate(rotation);
   for (let i = 0; i < total; i += 1) {
+    const value = slots[i];
     const start = i * sectorAngle - Math.PI / 2;
     const end = start + sectorAngle;
     ctx.beginPath();
@@ -124,7 +126,27 @@ function drawWheel(rotation = 0) {
     ctx.strokeStyle = "#d5c28c";
     ctx.lineWidth = 1.3;
     ctx.stroke();
+
+    ctx.save();
+    const mid = start + sectorAngle / 2;
+    const labelRadius = radius * 0.78;
+    ctx.rotate(mid);
+    ctx.translate(labelRadius, 0);
+    ctx.rotate(Math.PI / 2);
+    ctx.fillStyle = "#f6f0dd";
+    ctx.font = "bold 15px Segoe UI";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(value, 0, 0);
+    ctx.restore();
   }
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 0.16, 0, Math.PI * 2);
+  ctx.fillStyle = "#2b3543";
+  ctx.fill();
+  ctx.strokeStyle = "#d5c28c";
+  ctx.lineWidth = 2;
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -318,6 +340,17 @@ function finishVisualSpin(resultValue) {
   resultText.textContent = `Выпало число: ${resultValue}`;
 }
 
+function startIdleAnimation() {
+  function tick() {
+    if (!spinningVisual && currentAccount && currentRound && (currentRound.status === "betting" || currentRound.status === "freeze")) {
+      currentRotation = (currentRotation + idleSpinSpeed) % (Math.PI * 2);
+      drawWheel(currentRotation);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 async function sendBets() {
   await api("/api/bets", { method: "POST", body: JSON.stringify({ numberBets, stripeBets, modifierBets }) });
   showModal(true, "Ставки приняты на текущий раунд.");
@@ -480,6 +513,7 @@ withdrawModalBackdrop.addEventListener("click", (event) => {
 
 drawWheel(0);
 updateStats();
+startIdleAnimation();
 setInterval(updateRoundTimers, 120);
 setInterval(pollState, 800);
 pollState();

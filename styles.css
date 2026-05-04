@@ -46,12 +46,36 @@ body {
 
 .account-panel {
   margin-top: 18px;
-  background: rgba(8, 12, 17, 0.45);
-  border: 1px solid #2d3d4f;
+  background: linear-gradient(170deg, rgba(22, 36, 51, 0.9) 0%, rgba(13, 24, 34, 0.9) 100%);
+  border: 1px solid #38506a;
   border-radius: 14px;
-  padding: 12px;
+  padding: 14px;
   display: grid;
-  gap: 8px;
+  gap: 10px;
+}
+
+.account-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.steam-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #5d7691;
+  background: #1a2f45;
+  color: #d9e8f8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.account-caption {
+  color: #a8bdd2;
+  font-size: 13px;
 }
 
 .account-row {
@@ -60,6 +84,24 @@ body {
   gap: 8px;
   align-items: center;
   justify-content: center;
+}
+
+.account-row input[type="text"] {
+  width: 230px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #425a73;
+  background: #101b27;
+  color: #eef5ff;
+}
+
+.status-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #3b5268;
+  background: rgba(11, 21, 31, 0.8);
+  color: #d6e3f1;
+  font-size: 13px;
 }
 
 .admin-panel {

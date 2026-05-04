@@ -1,10 +1,15 @@
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
+const session = require("express-session");
+const passport = require("passport");
+const SteamStrategy = require("passport-steam").Strategy;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_STEAM_ID = process.env.ADMIN_STEAM_ID || "76561199323407310";
+const APP_BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;
+const STEAM_API_KEY = process.env.STEAM_API_KEY || "";
 
 const SPIN_INTERVAL_MS = 30000;
 const SPIN_DURATION_MS = 7600;
@@ -36,6 +41,17 @@ const accounts = new Map();
 const sessions = new Map();
 const globalHistory = [];
 const betsByRound = new Map();
+
+if (STEAM_API_KEY) {
+  passport.serializeUser((user, done) => done(null, user));
+  passport.deserializeUser((user, done) => done(null, user));
+
+  passport.use(new SteamStrategy({
+    returnURL: `${APP_BASE_URL}/api/auth/steam/return`,
+    realm: APP_BASE_URL,
+    apiKey: STEAM_API_KEY
+  }, (_, profile, done) => done(null, profile)));
+}
 
 function now() {
   return Date.now();
@@ -207,6 +223,13 @@ function ensureRoundLifecycle() {
 setInterval(ensureRoundLifecycle, 250);
 
 app.use(express.json());
+app.use(session({
+  secret: process.env.SESSION_SECRET || "dev_session_secret_change_me",
+  resave: false,
+  saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.static(path.resolve(__dirname)));
 
 app.post("/api/auth/login", (req, res) => {
@@ -220,6 +243,34 @@ app.post("/api/auth/login", (req, res) => {
   sessions.set(token, steamId);
   return res.json({ token, steamId, isAdmin: steamId === ADMIN_STEAM_ID });
 });
+
+app.get("/api/auth/steam", (req, res, next) => {
+  if (!STEAM_API_KEY) {
+    return res.status(503).json({ error: "STEAM_AUTH_DISABLED", message: "Set STEAM_API_KEY to enable Steam login." });
+  }
+  return passport.authenticate("steam", { failureRedirect: "/" })(req, res, next);
+});
+
+app.get("/api/auth/steam/return",
+  (req, res, next) => {
+    if (!STEAM_API_KEY) {
+      return res.redirect("/?authError=steam-disabled");
+    }
+    return passport.authenticate("steam", { failureRedirect: "/?authError=steam-failed" })(req, res, next);
+  },
+  (req, res) => {
+    const profile = req.user || {};
+    const steamId = String(profile.id || "").trim();
+    const displayName = String(profile.displayName || "").trim();
+    if (!/^\d{6,20}$/.test(steamId)) {
+      return res.redirect("/?authError=steam-invalid");
+    }
+    getOrCreateAccount(steamId, displayName);
+    const token = crypto.randomBytes(24).toString("hex");
+    sessions.set(token, steamId);
+    return res.redirect(`/?token=${encodeURIComponent(token)}`);
+  }
+);
 
 app.post("/api/auth/logout", requireUser, (req, res) => {
   const token = getSessionToken(req);

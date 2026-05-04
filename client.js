@@ -5,8 +5,6 @@ const resultText = document.getElementById("resultText");
 const betAmountInput = document.getElementById("betAmount");
 const balanceAmountInput = document.getElementById("balanceAmount");
 const applyBalanceBtn = document.getElementById("applyBalanceBtn");
-const steamIdInput = document.getElementById("steamIdInput");
-const steamNameInput = document.getElementById("steamNameInput");
 const steamLoginBtn = document.getElementById("steamLoginBtn");
 const steamLogoutBtn = document.getElementById("steamLogoutBtn");
 const authStatusText = document.getElementById("authStatusText");
@@ -80,6 +78,30 @@ function apiHeaders() {
   const headers = { "Content-Type": "application/json" };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   return headers;
+}
+
+function readAuthFromUrl() {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("token");
+  const authError = url.searchParams.get("authError");
+
+  if (token) {
+    authToken = token;
+    localStorage.setItem(AUTH_TOKEN_KEY, authToken);
+    url.searchParams.delete("token");
+    window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
+  }
+
+  if (authError) {
+    const messageByCode = {
+      "steam-disabled": "Steam-вход не включён на сервере.",
+      "steam-failed": "Не удалось авторизоваться через Steam.",
+      "steam-invalid": "Steam вернул некорректный ID аккаунта."
+    };
+    showModal(false, messageByCode[authError] || "Ошибка авторизации Steam.");
+    url.searchParams.delete("authError");
+    window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
+  }
 }
 
 async function api(path, options = {}) {
@@ -404,20 +426,8 @@ async function pollState() {
   }
 }
 
-steamLoginBtn.addEventListener("click", async () => {
-  try {
-    const steamId = String(steamIdInput.value || "").trim();
-    const name = String(steamNameInput.value || "").trim();
-    if (!/^\d{6,20}$/.test(steamId)) return showModal(false, "Неверный SteamID.");
-    const data = await api("/api/auth/login", { method: "POST", body: JSON.stringify({ steamId, name }) });
-    authToken = data.token;
-    localStorage.setItem(AUTH_TOKEN_KEY, authToken);
-    await pollState();
-    if (data.isAdmin) await refreshAdminAccounts();
-    showModal(true, "Вход выполнен.");
-  } catch (error) {
-    showModal(false, `Ошибка входа: ${error.message}`);
-  }
+steamLoginBtn.addEventListener("click", () => {
+  window.location.href = "/api/auth/steam";
 });
 
 steamLogoutBtn.addEventListener("click", async () => {
@@ -512,6 +522,7 @@ withdrawModalBackdrop.addEventListener("click", (event) => {
 });
 
 drawWheel(0);
+readAuthFromUrl();
 updateStats();
 startIdleAnimation();
 setInterval(updateRoundTimers, 120);
